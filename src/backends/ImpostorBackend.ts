@@ -30,6 +30,10 @@ export default class ImpostorBackend extends BackendAdapter {
             this.connection = new HubConnectionBuilder()
                 .withUrl(`http://${this.backendModel.ip}:${IMPOSTOR_BACKEND_PORT}/hub`).build();
 
+            this.connection.on(ImpostorSocketEvents.HostChange, (name: string) => {
+                this.emitHostChange(name);
+            });
+            
             this.connection.on(ImpostorSocketEvents.MapChange, (id: number) => {
                 this.emitMapChange(id);
             });
@@ -98,5 +102,6 @@ export enum ImpostorSocketEvents {
     MeetingEnded = "MeetingEnded",
     PlayerExiled = "PlayerExiled",
     CommsSabotage = "CommsSabotage",
-    GameEnd = "GameEnd"
+    GameEnd = "GameEnd",
+    HostChange = "HostChange"
 }
