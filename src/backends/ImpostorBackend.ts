@@ -22,6 +22,9 @@ export default class ImpostorBackend extends BackendAdapter {
 
     throttledEmitPlayerMove = _.throttle(this.emitPlayerPose, 300);
 
+    MeetingHappening = false;
+    CommsWorking = true;
+
     initialize(): void {
         try {
             this.connection = new HubConnectionBuilder()
@@ -33,6 +36,7 @@ export default class ImpostorBackend extends BackendAdapter {
 
             this.connection.on(ImpostorSocketEvents.GameStarted, () => {
                 this.emitAllPlayerJoinGroups(RoomGroup.Main);
+                this.CommsWorking = true;
             });
 
             this.connection.on(ImpostorSocketEvents.PlayerMove, (name: string, pose: Pose) => {
@@ -41,6 +45,15 @@ export default class ImpostorBackend extends BackendAdapter {
 
             this.connection.on(ImpostorSocketEvents.MeetingCalled, () => {
                 this.emitAllPlayerPoses({ x: 0, y: 0 });
+                //all playing players are yeeted into one group, if muted switched to main
+                this.emitPlayerFromJoinGroup(RoomGroup.Muted, RoomGroup.Main);
+            });
+
+            this.connection.on(ImpostorSocketEvents.MeetingEnded, () => {
+                // if comms broken at end of meeting switch back to muted groups
+                if (this.CommsWorking==false){
+                    this.emitPlayerFromJoinGroup(RoomGroup.Main, RoomGroup.Muted);
+                }
             });
 
             this.connection.on(ImpostorSocketEvents.PlayerExiled, (name: string) => {
@@ -48,11 +61,13 @@ export default class ImpostorBackend extends BackendAdapter {
             });
 
             this.connection.on(ImpostorSocketEvents.CommsSabotage, (fix: boolean) => {
+                this.CommsWorking = fix;
                 if (fix) {
-                    this.emitPlayerFromJoinGroup(RoomGroup.Muted, RoomGroup.Main);
-                } else {
-                    this.emitPlayerFromJoinGroup(RoomGroup.Main, RoomGroup.Muted);
-                }
+                        this.emitPlayerFromJoinGroup(RoomGroup.Muted, RoomGroup.Main);
+                    } else {
+                        this.emitPlayerFromJoinGroup(RoomGroup.Main, RoomGroup.Muted);
+                    }
+                
             });
 
             this.connection.on(ImpostorSocketEvents.GameEnd, () => {
@@ -80,6 +95,7 @@ export enum ImpostorSocketEvents {
     GameStarted = "GameStarted",
     PlayerMove = "PlayerMove",
     MeetingCalled = "MeetingCalled",
+    MeetingEnded = "MeetingEnded",
     PlayerExiled = "PlayerExiled",
     CommsSabotage = "CommsSabotage",
     GameEnd = "GameEnd"
