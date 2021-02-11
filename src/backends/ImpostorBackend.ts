@@ -47,13 +47,15 @@ export default class ImpostorBackend extends BackendAdapter {
                 this.throttledEmitPlayerMove(name, pose);
             });
 
-            this.connection.on(ImpostorSocketEvents.MeetingCalled, () => {
+	    this.connection.on(ImpostorSocketEvents.MeetingCalled, () => {
+		console.log("meeting called");
                 this.emitAllPlayerPoses({ x: 0, y: 0 });
                 //all playing players are yeeted into one group, if muted switched to main
                 this.emitPlayerFromJoinGroup(RoomGroup.Muted, RoomGroup.Main);
             });
 
-            this.connection.on(ImpostorSocketEvents.MeetingEnded, () => {
+	    this.connection.on(ImpostorSocketEvents.MeetingEnded, () => {
+		console.log("meeting ended");
                 // if comms broken at end of meeting switch back to muted groups
                 if (this.CommsWorking==false){
                     this.emitPlayerFromJoinGroup(RoomGroup.Main, RoomGroup.Muted);
@@ -64,7 +66,8 @@ export default class ImpostorBackend extends BackendAdapter {
                 this.emitPlayerJoinGroup(name, RoomGroup.Spectator);
             });
 
-            this.connection.on(ImpostorSocketEvents.CommsSabotage, (fix: boolean) => {
+	    this.connection.on(ImpostorSocketEvents.CommsSabotage, (fix: boolean) => {
+		console.log("comms sabatage" + fix);
                 this.CommsWorking = fix;
                 if (fix) {
                         this.emitPlayerFromJoinGroup(RoomGroup.Muted, RoomGroup.Main);
