@@ -12,26 +12,48 @@ import { GameSettings } from "../types/models/ClientOptions";
 import { RoomGroup } from "../types/enums/RoomGroup";
 import { BackendEvent } from "../types/enums/BackendEvent";
 import { PlayerFlags } from "../types/enums/PlayerFlags";
+import { GameState } from "../types/enums/GameState";
 
-export type LogMode = "log"|"info"|"success"|"fatal"|"warn"|"error";
+export type LogMode = "log" | "info" | "success" | "fatal" | "warn" | "error";
 
 // Actual backend class
 export abstract class BackendAdapter extends EventEmitter {
     abstract backendModel: BackendModel;
     destroyed: boolean;
     gameID: string;
-    
+    gameState: GameState;
+
     protected constructor() {
         super();
     }
 
     abstract initialize(): void;
     abstract destroy(): void;
-    
+
     log(mode: LogMode, format: string, ...params: unknown[]): void {
         const formatted = util.format(format, ...params);
 
         logger[mode](chalk.grey("[" + BackendType[this.backendModel.backendType] + " " + this.gameID + "]"), formatted);
+    }
+
+    emitGameState(state: GameState): void {
+        this.gameState = state;
+        switch (state) {
+            case GameState.Lobby:
+            // fallthrough
+            case GameState.InGame:
+                this.emitAllPlayerJoinGroups(RoomGroup.Main);
+                break;
+            case GameState.Meeting:
+                this.emitAllPlayerPoses({ x: 0, y: 0 });
+                break;
+        }
+    }
+
+    emitPlayerState(name: String, state: PlayerState): void {
+        switch (state) {
+            // TODO
+        }
     }
 
     emitPlayerPose(name: string, pose: Pose): void {
@@ -42,6 +64,9 @@ export abstract class BackendAdapter extends EventEmitter {
         this.emit(BackendEvent.PlayerColor, { name, color });
     }
 
+    /**
+     * @deprecated("use emitPlayerState instead")
+     */
     emitPlayerJoinGroup(name: string, group: RoomGroup): void {
         this.emit(BackendEvent.PlayerJoinGroup, { name, group });
     }
@@ -49,11 +74,17 @@ export abstract class BackendAdapter extends EventEmitter {
     emitAllPlayerPoses(pose: Pose): void {
         this.emit(BackendEvent.AllPlayerPoses, { pose });
     }
-    
+
+    /**
+     * @deprecated("use emitGameState instead")
+     */
     emitAllPlayerJoinGroups(group: RoomGroup): void {
         this.emit(BackendEvent.AllPlayerJoinGroups, { group });
     }
 
+    /**
+     * @deprecated("use emitGameState instead")
+     */
     emitPlayerFromJoinGroup(from: RoomGroup, to: RoomGroup): void {
         this.emit(BackendEvent.PlayerFromJoinGroup, { from, to });
     }
