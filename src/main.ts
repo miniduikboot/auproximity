@@ -62,6 +62,8 @@ export const state: AUProximityState = {
 	mediasoupMgr: new MediasoupManager(),
 };
 
+state.mediasoupMgr.initialize();
+
 io.on("connection", (socket: Socket) => {
 	const client = new Client(socket, v4());
 	state.allClients.push(client);

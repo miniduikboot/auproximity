@@ -167,20 +167,20 @@ export default class Client implements ClientBase {
 		if (!room) {
 			room = new Room(backendModel);
 			state.allRooms.push(room);
-
-			if (room.router !== undefined) {
-				//TODO this will race
-				this.consumeTransport = await room.router.createWebRtcTransport(
-					MediasoupManager.transport_options
-				);
-				this.produceTransport = await room.router.createWebRtcTransport(
-					MediasoupManager.transport_options
-				);
-			}
 		}
 
 		room.addClient(this);
 		this.room = room;
+
+		if (room.router !== undefined) {
+			//TODO this will race
+			this.consumeTransport = await room.router.createWebRtcTransport(
+				MediasoupManager.transport_options
+			);
+			this.produceTransport = await room.router.createWebRtcTransport(
+				MediasoupManager.transport_options
+			);
+		}
 	}
 
 	async leaveRoom(): Promise<void> {
