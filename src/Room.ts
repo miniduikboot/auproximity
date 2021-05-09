@@ -34,7 +34,7 @@ export default class Room {
 	public backendAdapter: BackendAdapter;
 	public clients: Client[] = [];
 	public bans: Set<string> = new Set();
-	public router?: Router;
+	public router!: Router;
 
 	map: GameMap;
 	hostname: string;
@@ -58,7 +58,6 @@ export default class Room {
 		this.backendModel = backendModel;
 		this.backendAdapter = Room.buildBackendAdapter(backendModel);
 		this.initializeBackend();
-		this.initializeRouter();
 	}
 
 	private static buildBackendAdapter(
@@ -213,7 +212,7 @@ export default class Room {
 		this.backendAdapter.initialize();
 	}
 
-	private async initializeRouter() {
+	async initializeRouter() {
 		this.router = await state.mediasoupMgr.createRouter();
 	}
 
