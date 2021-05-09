@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-
+import { Transport } from "mediasoup/lib/types";
 import { Color } from "@skeldjs/constant";
 
 import {
@@ -22,6 +22,7 @@ import { PlayerFlag } from "./types/enums/PlayerFlags";
 import { GameFlag } from "./types/enums/GameFlags";
 import { GameState } from "./types/enums/GameState";
 import { JOIN_TIMEOUT } from "./consts";
+import MediasoupManager from "./MediasoupManager";
 
 export interface PlayerPose {
 	x: number;
@@ -43,6 +44,9 @@ export default class Client implements ClientBase {
 	public readonly uuid: string;
 
 	public name: string;
+
+	consumeTransport?: Transport;
+	produceTransport?: Transport;
 
 	private connected_at: number;
 
@@ -163,6 +167,16 @@ export default class Client implements ClientBase {
 		if (!room) {
 			room = new Room(backendModel);
 			state.allRooms.push(room);
+
+			if (room.router !== undefined) {
+				//TODO this will race
+				this.consumeTransport = await room.router.createWebRtcTransport(
+					MediasoupManager.transport_options
+				);
+				this.produceTransport = await room.router.createWebRtcTransport(
+					MediasoupManager.transport_options
+				);
+			}
 		}
 
 		room.addClient(this);

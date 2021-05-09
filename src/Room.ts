@@ -1,4 +1,5 @@
 import { Color, GameMap } from "@skeldjs/constant";
+import { Router } from "mediasoup/lib/types";
 
 import { BackendEvent } from "./types/enums/BackendEvents";
 
@@ -24,6 +25,7 @@ import { state } from "./main";
 import { GameState } from "./types/enums/GameState";
 import { GameFlag } from "./types/enums/GameFlags";
 import { sleep } from "./util/sleep";
+import logger from "./util/logger";
 
 const GameEndTimeout = 10 * 60 * 1000;
 
@@ -32,6 +34,7 @@ export default class Room {
 	public backendAdapter: BackendAdapter;
 	public clients: Client[] = [];
 	public bans: Set<string> = new Set();
+	public router?: Router;
 
 	map: GameMap;
 	hostname: string;
@@ -55,6 +58,7 @@ export default class Room {
 		this.backendModel = backendModel;
 		this.backendAdapter = Room.buildBackendAdapter(backendModel);
 		this.initializeBackend();
+		this.initializeRouter();
 	}
 
 	private static buildBackendAdapter(
@@ -209,6 +213,13 @@ export default class Room {
 		this.backendAdapter.initialize();
 	}
 
+	private initializeRouter() {
+		state.mediasoupMgr
+			.createRouter()
+			.then((r) => (this.router = r))
+			.catch((e) => logger.error(e));
+	}
+
 	getPlayerByName(name: string): PlayerModel {
 		const found = this.players.get(name.toLowerCase().trim());
 
@@ -334,6 +345,10 @@ export default class Room {
 		}
 
 		state.allRooms = state.allRooms.filter((room) => room !== this);
+
+		if (this.router !== undefined && this.router.closed == false) {
+			this.router.close();
+		}
 
 		if (this.backendAdapter.destroyed) return;
 

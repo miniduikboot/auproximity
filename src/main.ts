@@ -14,6 +14,7 @@ import { AUProximityState } from "./types/models/AUProximityState";
 
 import Client from "./Client";
 import logger from "./util/logger";
+import MediasoupManager from "./MediasoupManager";
 
 const app = express();
 
@@ -58,6 +59,7 @@ export const state: AUProximityState = {
 	allClients: [],
 	allRooms: [],
 	isClosing: false,
+	mediasoupMgr: new MediasoupManager(),
 };
 
 io.on("connection", (socket: Socket) => {
