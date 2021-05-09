@@ -213,11 +213,8 @@ export default class Room {
 		this.backendAdapter.initialize();
 	}
 
-	private initializeRouter() {
-		state.mediasoupMgr
-			.createRouter()
-			.then((r) => (this.router = r))
-			.catch((e) => logger.error(e));
+	private async initializeRouter() {
+		this.router = await state.mediasoupMgr.createRouter();
 	}
 
 	getPlayerByName(name: string): PlayerModel {
