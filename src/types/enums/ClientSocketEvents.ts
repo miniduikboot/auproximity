@@ -15,4 +15,5 @@ export enum ClientSocketEvents {
 	SetGameState = "setgamestate",
 	SetGameFlags = "setgameflags",
 	SetFlagsOf = "setflagsof",
+	SetRtcSettings = "setRtcSettings",
 }

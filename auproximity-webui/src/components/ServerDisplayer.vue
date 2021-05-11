@@ -62,6 +62,8 @@ import { Socket } from "vue-socket.io-extended";
 import { GameMap } from "@skeldjs/constant";
 import Peer from "peerjs";
 import intersect from "path-intersection";
+import * as mediasoup from "mediasoup-client";
+import { RtpCapabilities } from "mediasoup-client/lib/types";
 
 import consts from "@/consts";
 import { ClientSocketEvents } from "@/models/ClientSocketEvents";
@@ -72,6 +74,7 @@ import {
 	PlayerPose,
 } from "@/models/ClientModel";
 import { BackendType } from "@/models/BackendModel";
+import { RtcTransportParameters } from "@/models/RtcTransportParameters";
 import { colliderMaps } from "@/lib/ColliderMaps";
 import ClientListItem from "@/components/ClientListItem.vue";
 import MyClientListItem from "@/components/MyClientListItem.vue";
@@ -100,14 +103,28 @@ export default class ServerDisplayer extends Vue {
 	showSnackbar = false;
 	snackbarMessage = "";
 
+	// START MEDIASOUP
+	device = new mediasoup.Device();
+	// END MEDIASOUP
+	// START PEERJS
 	peer?: Peer;
 	remotectx?: AudioContext;
 	remoteStreams: RemoteStreamModel[] = [];
+	// END PEERJS
 
 	settings: GameSettings = {
 		crewmateVision: 1,
 		map: GameMap.TheSkeld,
 	};
+
+	// START MEDIASOUP
+	async connect(uuid: string) {
+		if (!this.device.loaded) {
+			// get rtpcaps from server TODO
+		}
+	}
+	// END MEDIASOUP
+	// START PEERJS
 
 	/**
 	 * Starts a PeerJS connection, handles answering calls and auto-reconnects to PeerJS and remote peer MediaStreams on error
@@ -288,6 +305,8 @@ export default class ServerDisplayer extends Vue {
 		this.remoteStreams = [];
 		this.remotectx = undefined;
 	}
+
+	// END PEERJS
 
 	@Socket(ClientSocketEvents.SetUuid)
 	onSetUuid(uuid: string) {
@@ -473,6 +492,20 @@ export default class ServerDisplayer extends Vue {
 		this.remoteStreams.forEach((s) => {
 			this.recalcVolumeForRemoteStream(s);
 		});
+	}
+
+	@Socket(ClientSocketEvents.SetRtcSettings)
+	async onSetRtcSettings(payload: {
+		rtpCapabilities: RtpCapabilities;
+		consumeTransport: RtcTransportParameters;
+		produceTransport: RtcTransportParameters;
+	}) {
+		if (!this.device.loaded) {
+			await this.device.load({
+				routerRtpCapabilities: payload.rtpCapabilities,
+			});
+		}
+		// TODO connect transports
 	}
 
 	recalcVolumeForRemoteStream(stream: {

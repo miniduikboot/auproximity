@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { Transport } from "mediasoup/lib/types";
+import { Transport, WebRtcTransport } from "mediasoup/lib/types";
 import { Color } from "@skeldjs/constant";
 
 import {
@@ -23,6 +23,7 @@ import { GameFlag } from "./types/enums/GameFlags";
 import { GameState } from "./types/enums/GameState";
 import { JOIN_TIMEOUT } from "./consts";
 import MediasoupManager from "./MediasoupManager";
+import { RtcTransportParameters } from "./types/models/RtcTransportParameters";
 
 export interface PlayerPose {
 	x: number;
@@ -45,8 +46,8 @@ export default class Client implements ClientBase {
 
 	public name: string;
 
-	consumeTransport?: Transport;
-	produceTransport?: Transport;
+	consumeTransport?: WebRtcTransport;
+	produceTransport?: WebRtcTransport;
 
 	private connected_at: number;
 
@@ -107,6 +108,13 @@ export default class Client implements ClientBase {
 		);
 
 		this.socket.emit(ClientSocketEvents.SetUuid, this.uuid);
+	}
+
+	private serializeTransport(
+		transport: WebRtcTransport
+	): RtcTransportParameters {
+		const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
+		return { id, iceParameters, iceCandidates, dtlsParameters };
 	}
 
 	async joinRoom(name: string, backendModel: BackendModel): Promise<void> {
@@ -173,12 +181,16 @@ export default class Client implements ClientBase {
 		room.addClient(this);
 		this.room = room;
 
-		this.consumeTransport = await room.router.createWebRtcTransport(
-			MediasoupManager.transport_options
-		);
-		this.produceTransport = await room.router.createWebRtcTransport(
-			MediasoupManager.transport_options
-		);
+		[this.consumeTransport, this.produceTransport] = await Promise.all([
+			room.router.createWebRtcTransport(MediasoupManager.transport_options),
+			room.router.createWebRtcTransport(MediasoupManager.transport_options),
+		]);
+
+		this.socket.emit(ClientSocketEvents.SetRtcSettings, {
+			routerCapabilities: room.router.rtpCapabilities,
+			consumeTransport: this.serializeTransport(this.consumeTransport),
+			produceTransport: this.serializeTransport(this.produceTransport),
+		});
 	}
 
 	async leaveRoom(): Promise<void> {
