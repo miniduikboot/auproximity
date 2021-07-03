@@ -44,7 +44,43 @@ export const CameraPositions = {
 		},
 	],
 	[GameMap.AprilFoolsTheSkeld]: [],
-	[GameMap.Airship]: [],
+	[GameMap.Airship]: [
+		{
+			// Engine Room
+			x: -8.42,
+			y: 0.007,
+		},
+		{
+			// Vault
+			x: -3.91,
+			y: 9.56,
+		},
+		{
+			// Records Left
+			x: 16.61,
+			y: 10.31,
+		},
+		{
+			// Records Right
+			x: 23.75,
+			y: 10.3,
+		},
+		{
+			// Security
+			x: 4.74,
+			y: -11.15,
+		},
+		{
+			// Cargo Bay
+			x: 30.04,
+			y: -0.38,
+		},
+		{
+			// Meeting Room
+			x: 3.09,
+			y: 16.7,
+		},
+	],
 };
 
 export function getClosestCamera(position: PlayerPose, map: GameMap) {
